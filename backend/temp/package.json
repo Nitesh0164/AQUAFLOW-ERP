@@ -1,0 +1,13 @@
+{
+  "name": "temp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "contract:emit": "prisma contract emit"
+  },
+  "dependencies": {
+    "@prisma/orm-postgres": "^8.0.0-rc.11",
+    "dotenv": "^17.4.2"
+  }
+}
