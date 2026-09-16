@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/server.js",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "prisma skills sync || exit 0",
     "contract:emit": "prisma contract emit"
@@ -19,6 +21,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.0",
     "swagger-ui-express": "^5.0.1",
     "zod": "^4.6.5"

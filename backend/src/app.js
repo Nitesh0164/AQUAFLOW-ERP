@@ -3,6 +3,7 @@ import cors from 'cors';
 import { notFoundHandler } from './middleware/notFound.js';
 import { errorHandler } from './middleware/error.js';
 import healthRoutes from './routes/health.js';
+import authRoutes from './routes/auth.routes.js';
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api', healthRoutes);
+app.use('/api/auth', authRoutes);
 
 // 404 Middleware
 app.use(notFoundHandler);
