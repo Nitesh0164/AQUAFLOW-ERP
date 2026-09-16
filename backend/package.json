@@ -3,19 +3,28 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/server.js",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "prisma skills sync || exit 0",
+    "contract:emit": "prisma contract emit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
+    "@prisma/client": "^7.10.0",
+    "@prisma/orm-postgres": "^8.0.0-rc.11",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "pg": "^8.23.0",
     "swagger-ui-express": "^5.0.1",
     "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@prisma/cli-engine": "^0.4.0",
+    "@types/node": "^26.1.2",
+    "prisma": "^8.0.0-rc.15"
   }
 }
