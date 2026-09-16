@@ -12,3 +12,9 @@ export const createQuotationSchema = z.object({
     gstPercent: z.number().min(0, 'GST percent must be >= 0')
   })).min(1, 'At least one item is required')
 });
+
+export const updateQuotationStatusSchema = z.object({
+  status: z.enum(['SENT', 'ACCEPTED', 'REJECTED'], {
+    errorMap: () => ({ message: 'Invalid status' })
+  })
+});

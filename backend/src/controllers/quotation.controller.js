@@ -182,3 +182,56 @@ export const getQuotationById = async (req, res, next) => {
     next(error);
   }
 };
+
+export const updateQuotationStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status: newStatus } = req.body;
+
+    if (!['SENT', 'ACCEPTED', 'REJECTED'].includes(newStatus)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+
+    // Fetch current status
+    const quoQuery = 'SELECT status FROM public."quotation" WHERE id = $1';
+    const quoRes = await pool.query(quoQuery, [parseInt(id, 10)]);
+
+    if (quoRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Quotation not found' });
+    }
+
+    const currentStatus = quoRes.rows[0].status;
+
+    // FSM Validation
+    const validTransitions = {
+      'DRAFT': ['SENT'],
+      'SENT': ['ACCEPTED', 'REJECTED'],
+      'ACCEPTED': [],
+      'REJECTED': []
+    };
+
+    if (!validTransitions[currentStatus].includes(newStatus)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Cannot transition quotation from ${currentStatus} to ${newStatus}` 
+      });
+    }
+
+    // Update Status
+    const updateQuery = `
+      UPDATE public."quotation"
+      SET status = $1, "updatedAt" = NOW()
+      WHERE id = $2
+      RETURNING id, "quotationNumber", status
+    `;
+    const updateRes = await pool.query(updateQuery, [newStatus, parseInt(id, 10)]);
+
+    res.json({
+      success: true,
+      quotation: updateRes.rows[0]
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
