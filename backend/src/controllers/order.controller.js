@@ -137,3 +137,110 @@ export const confirmOrder = async (req, res, next) => {
     client.release();
   }
 };
+
+import { createDispatchSchema } from '../validators/dispatch.validator.js';
+
+export const dispatchOrder = async (req, res, next) => {
+  const client = await pool.connect();
+  try {
+    const { id } = req.params;
+    const salesOrderId = parseInt(id, 10);
+    const parsed = createDispatchSchema.parse(req.body);
+    
+    await client.query('BEGIN');
+
+    // 1. Fetch Sales Order FOR UPDATE (Locking the row)
+    const soRes = await client.query('SELECT status FROM public."salesOrder" WHERE id = $1 FOR UPDATE', [salesOrderId]);
+    if (soRes.rows.length === 0) {
+      throw new Error('Sales Order not found');
+    }
+
+    const order = soRes.rows[0];
+    if (order.status !== 'CONFIRMED') {
+      throw new Error(`Only CONFIRMED orders can be dispatched. Current status is ${order.status}`);
+    }
+
+    // 2. Prevent Double Dispatch
+    const existingDispatchRes = await client.query('SELECT id FROM public."dispatch" WHERE "salesOrderId" = $1', [salesOrderId]);
+    if (existingDispatchRes.rows.length > 0) {
+      throw new Error('This Sales Order has already been dispatched');
+    }
+
+    // 3. Generate Dispatch Number (DSP-YYYY-XXXX)
+    const year = new Date().getFullYear();
+    const prefix = `DSP-${year}-`;
+    const seqRes = await client.query(`
+      SELECT "dispatchNumber" FROM public."dispatch"
+      WHERE "dispatchNumber" LIKE $1
+      ORDER BY "dispatchNumber" DESC LIMIT 1
+    `, [`${prefix}%`]);
+    
+    let nextSeq = 1;
+    if (seqRes.rows.length > 0) {
+      const lastDSP = seqRes.rows[0].dispatchNumber;
+      const lastSeq = parseInt(lastDSP.split('-')[2], 10);
+      nextSeq = lastSeq + 1;
+    }
+    const dispatchNumber = `${prefix}${String(nextSeq).padStart(4, '0')}`;
+
+    // 4. Insert Dispatch Record
+    const dispatchDate = parsed.dispatchDate || null;
+    const dispatchInsert = `
+      INSERT INTO public."dispatch" (
+        "dispatchNumber", "salesOrderId", "dispatchDate", "vehicleNumber", "driverName", "createdAt", "updatedAt"
+      )
+      VALUES ($1, $2, COALESCE($3::timestamp, NOW()), $4, $5, NOW(), NOW())
+      RETURNING id, "dispatchNumber"
+    `;
+    const dispatchRes = await client.query(dispatchInsert, [
+      dispatchNumber, salesOrderId, dispatchDate, parsed.vehicleNumber, parsed.driverName
+    ]);
+    const dispatch = dispatchRes.rows[0];
+
+    // 5. Fetch Order Items in strict order to prevent deadlocks
+    const itemsRes = await client.query('SELECT "productId", quantity FROM public."salesOrderItem" WHERE "salesOrderId" = $1 ORDER BY "productId" ASC', [salesOrderId]);
+    
+    // 6. Insert Dispatch Items and Update Inventory
+    for (const item of itemsRes.rows) {
+      // Insert Dispatch Item
+      await client.query(`
+        INSERT INTO public."dispatchItem" (
+          "dispatchId", "productId", quantity
+        )
+        VALUES ($1, $2, $3)
+      `, [dispatch.id, item.productId, item.quantity]);
+
+      // Update Inventory (goods are physically leaving, so subtract from both)
+      // Since we already reserved them, we are safely decrementing both physical and reserved
+      await client.query(`
+        UPDATE public."inventory"
+        SET "physicalQuantity" = "physicalQuantity" - $1, 
+            "reservedQuantity" = "reservedQuantity" - $1, 
+            "updatedAt" = NOW()
+        WHERE "productId" = $2
+      `, [item.quantity, item.productId]);
+    }
+
+    // 7. Update Sales Order Status to DISPATCHED
+    await client.query(`
+      UPDATE public."salesOrder"
+      SET status = 'DISPATCHED', "updatedAt" = NOW()
+      WHERE id = $1
+    `, [salesOrderId]);
+
+    await client.query('COMMIT');
+
+    res.status(201).json({
+      success: true,
+      dispatch
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    if (error.name === 'ZodError' || error.message.includes('dispatched') || error.message.includes('CONFIRMED')) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+    next(error);
+  } finally {
+    client.release();
+  }
+};
