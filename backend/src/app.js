@@ -9,6 +9,7 @@ import productRoutes from './routes/product.routes.js';
 import inventoryRoutes from './routes/inventory.routes.js';
 import enquiryRoutes from './routes/enquiry.routes.js';
 import quotationRoutes from './routes/quotation.routes.js';
+import orderRoutes from './routes/order.routes.js';
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/enquiries', enquiryRoutes);
 app.use('/api/quotations', quotationRoutes);
+app.use('/api/orders', orderRoutes);
 
 // 404 Middleware
 app.use(notFoundHandler);
