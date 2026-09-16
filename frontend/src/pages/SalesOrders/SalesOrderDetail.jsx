@@ -86,6 +86,30 @@ const SalesOrderDetail = ({ orderId, onActionSuccess }) => {
         </div>
       </div>
 
+      {data.status === 'DISPATCHED' && data.dispatch && (
+        <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#e9ecef', borderRadius: '4px' }}>
+          <h3 style={{ marginTop: 0 }}>Dispatch Details</h3>
+          <div className="detail-grid" style={{ marginBottom: 0 }}>
+            <div className="detail-item">
+              <label>Dispatch Number</label>
+              <div>{data.dispatch.dispatchNumber}</div>
+            </div>
+            <div className="detail-item">
+              <label>Dispatch Date</label>
+              <div>{formatDate(data.dispatch.dispatchDate)}</div>
+            </div>
+            <div className="detail-item">
+              <label>Vehicle Number</label>
+              <div>{data.dispatch.vehicleNumber}</div>
+            </div>
+            <div className="detail-item">
+              <label>Driver Name</label>
+              <div>{data.dispatch.driverName}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <h3>Inventory Allocation</h3>
       <table className="data-table inventory-table">
         <thead>
@@ -162,7 +186,7 @@ const SalesOrderDetail = ({ orderId, onActionSuccess }) => {
       {isDispatchOpen && (
         <DispatchModal 
           isOpen={isDispatchOpen} 
-          orderId={orderId} 
+          orderData={data} 
           onClose={() => setIsDispatchOpen(false)}
           onSuccess={handleDispatchSuccess}
         />

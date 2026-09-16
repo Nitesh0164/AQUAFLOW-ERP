@@ -1,23 +1,59 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import api from '../../api/axios';
 import Modal from '../../components/Modal';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
-const DispatchModal = ({ isOpen, onClose, orderId, onSuccess }) => {
+const DispatchModal = ({ isOpen, onClose, orderData, onSuccess }) => {
   const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [formData, setFormData] = useState(null);
 
-  const onSubmit = async (data) => {
+  const onPreSubmit = (data) => {
+    setFormData(data);
+    setConfirmOpen(true);
+  };
+
+  const executeDispatch = async () => {
+    setConfirmOpen(false);
     try {
-      await api.post(`/sales-orders/${orderId}/dispatch`, data);
-      onSuccess('Order dispatched successfully!');
+      const response = await api.post(`/sales-orders/${orderData.id}/dispatch`, formData);
+      onSuccess('Order dispatched successfully.');
     } catch (err) {
       setError('root', { message: err.response?.data?.message || 'Failed to dispatch order.' });
     }
   };
 
+  if (!orderData) return null;
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Dispatch Order (ID: ${orderId})`}>
-      <form onSubmit={handleSubmit(onSubmit)} className="dispatch-form">
+    <Modal isOpen={isOpen} onClose={onClose} title={`Dispatch Order (ID: ${orderData.orderNumber})`}>
+      
+      {/* Read-only Sales Order Info */}
+      <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+        <p><strong>Order Number:</strong> {orderData.orderNumber}</p>
+        <p><strong>Customer:</strong> {orderData.customer?.companyName}</p>
+        
+        <h4 style={{ marginTop: '10px', marginBottom: '5px' }}>Products</h4>
+        <table className="data-table" style={{ fontSize: '12px' }}>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Ordered Qty</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orderData.items?.map(item => (
+              <tr key={item.id}>
+                <td>{item.product?.productName}</td>
+                <td style={{ fontWeight: 'bold' }}>{item.quantity}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <form onSubmit={handleSubmit(onPreSubmit)} className="dispatch-form">
         <div className="form-group">
           <label>Dispatch Date *</label>
           <input 
@@ -51,6 +87,15 @@ const DispatchModal = ({ isOpen, onClose, orderId, onSuccess }) => {
           {isSubmitting ? 'Processing...' : 'Confirm Dispatch'}
         </button>
       </form>
+
+      <ConfirmDialog 
+        isOpen={confirmOpen}
+        title="Confirm Dispatch"
+        message="Dispatch this Sales Order? Inventory quantities will be updated."
+        confirmText="Yes, Dispatch"
+        onConfirm={executeDispatch}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </Modal>
   );
 };
