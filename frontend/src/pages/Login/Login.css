@@ -24,7 +24,23 @@
 .login-box p {
   text-align: center;
   color: #6c757d;
-  margin-bottom: 25px;
+  margin-bottom: 15px;
+}
+
+.demo-hints {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  border: 1px solid #ffeeba;
+}
+
+.demo-hints code {
+  background-color: rgba(0,0,0,0.05);
+  padding: 2px 4px;
+  border-radius: 3px;
 }
 
 .form-group {
@@ -42,6 +58,10 @@
   padding: 10px;
   border: 1px solid #ced4da;
   border-radius: 4px;
+}
+
+.form-group input:disabled {
+  background-color: #e9ecef;
 }
 
 .error {
