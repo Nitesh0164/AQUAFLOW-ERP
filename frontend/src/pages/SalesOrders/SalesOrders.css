@@ -1,0 +1,31 @@
+.inventory-table th {
+  background-color: #343a40;
+  color: white;
+  font-size: 13px;
+}
+
+.inventory-table td {
+  font-size: 13px;
+}
+
+.qty-required {
+  font-weight: bold;
+  color: #0056b3;
+}
+
+.qty-available {
+  font-weight: bold;
+}
+
+.qty-insufficient {
+  color: #dc3545;
+  background-color: #f8d7da;
+}
+
+.qty-sufficient {
+  color: #28a745;
+}
+
+.dispatch-form {
+  margin-top: 15px;
+}

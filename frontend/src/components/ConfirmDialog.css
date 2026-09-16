@@ -1,0 +1,31 @@
+.confirm-dialog-body {
+  text-align: center;
+  padding: 10px 0;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.btn-cancel {
+  background-color: #6c757d;
+}
+
+.btn-cancel:hover {
+  background-color: #5a6268;
+}
+
+.btn-confirm.btn-primary {
+  background-color: #0056b3;
+}
+
+.btn-confirm.btn-danger {
+  background-color: #dc3545;
+}
+
+.btn-confirm.btn-danger:hover {
+  background-color: #c82333;
+}
