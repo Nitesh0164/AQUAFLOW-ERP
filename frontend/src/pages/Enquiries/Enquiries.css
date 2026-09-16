@@ -1,0 +1,127 @@
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.data-table th, .data-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.data-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+}
+
+.action-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  background-color: #17a2b8;
+}
+
+.action-btn:hover {
+  background-color: #138496;
+}
+
+/* Form Styles */
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.form-group textarea, .form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+.items-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #dee2e6;
+}
+
+.item-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.item-row .form-group {
+  margin-bottom: 0;
+}
+
+.remove-btn {
+  background-color: #dc3545;
+  padding: 10px;
+  margin-top: 24px;
+}
+
+.remove-btn:hover {
+  background-color: #c82333;
+}
+
+.add-btn {
+  background-color: #28a745;
+  margin-bottom: 15px;
+}
+
+.add-btn:hover {
+  background-color: #218838;
+}
+
+.submit-btn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  font-size: 16px;
+}
+
+/* Detail View Styles */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.detail-item label {
+  display: block;
+  font-size: 12px;
+  color: #6c757d;
+  margin-bottom: 3px;
+}
+
+.detail-item div {
+  font-weight: 500;
+}
+
+.detail-notes {
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
