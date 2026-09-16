@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createQuotation, getQuotations, getQuotationById, updateQuotationStatus } from '../controllers/quotation.controller.js';
+import { createQuotation, getQuotations, getQuotationById, updateQuotationStatus, convertQuotationToOrder } from '../controllers/quotation.controller.js';
 import { authenticate, authorize } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -11,5 +11,6 @@ router.post('/', createQuotation);
 router.get('/', getQuotations);
 router.get('/:id', getQuotationById);
 router.patch('/:id/status', updateQuotationStatus);
+router.post('/:id/convert', convertQuotationToOrder);
 
 export default router;

@@ -235,3 +235,98 @@ export const updateQuotationStatus = async (req, res, next) => {
     next(error);
   }
 };
+
+export const convertQuotationToOrder = async (req, res, next) => {
+  const client = await pool.connect();
+  try {
+    const { id } = req.params;
+    const quotationId = parseInt(id, 10);
+
+    await client.query('BEGIN');
+
+    // 1. Fetch Quotation and check status
+    const quoRes = await client.query('SELECT status, "customerId", "grandTotal", "enquiryId" FROM public."quotation" WHERE id = $1', [quotationId]);
+    if (quoRes.rows.length === 0) {
+      throw new Error('Quotation not found');
+    }
+
+    const quotation = quoRes.rows[0];
+    if (quotation.status !== 'ACCEPTED') {
+      throw new Error(`Only ACCEPTED quotations can be converted. Current status is ${quotation.status}`);
+    }
+
+    // 2. Prevent Double Conversion (Unique constraint will also catch this, but this is a cleaner message)
+    const existingOrderRes = await client.query('SELECT id FROM public."salesOrder" WHERE "quotationId" = $1', [quotationId]);
+    if (existingOrderRes.rows.length > 0) {
+      throw new Error('This quotation has already been converted into a Sales Order');
+    }
+
+    // 3. Generate Sales Order Number (SO-YYYY-XXXX)
+    const year = new Date().getFullYear();
+    const prefix = `SO-${year}-`;
+    const seqRes = await client.query(`
+      SELECT "orderNumber" FROM public."salesOrder"
+      WHERE "orderNumber" LIKE $1
+      ORDER BY "orderNumber" DESC LIMIT 1
+    `, [`${prefix}%`]);
+    
+    let nextSeq = 1;
+    if (seqRes.rows.length > 0) {
+      const lastSO = seqRes.rows[0].orderNumber;
+      const lastSeq = parseInt(lastSO.split('-')[2], 10);
+      nextSeq = lastSeq + 1;
+    }
+    const orderNumber = `${prefix}${String(nextSeq).padStart(4, '0')}`;
+
+    // 4. Insert Sales Order
+    const soInsert = `
+      INSERT INTO public."salesOrder" (
+        "orderNumber", "quotationId", "customerId", "orderDate", "totalAmount", status, "createdAt", "updatedAt"
+      )
+      VALUES ($1, $2, $3, NOW(), $4, 'PENDING', NOW(), NOW())
+      RETURNING id, "orderNumber", status
+    `;
+    const soRes = await client.query(soInsert, [orderNumber, quotationId, quotation.customerId, quotation.grandTotal]);
+    const salesOrder = soRes.rows[0];
+
+    // 5. Copy Items
+    const itemsRes = await client.query(`
+      SELECT "productId", quantity, "unitPrice", "lineAmount"
+      FROM public."quotationItem"
+      WHERE "quotationId" = $1
+    `, [quotationId]);
+
+    for (const item of itemsRes.rows) {
+      await client.query(`
+        INSERT INTO public."salesOrderItem" (
+          "salesOrderId", "productId", quantity, "unitPrice", "lineAmount"
+        )
+        VALUES ($1, $2, $3, $4, $5)
+      `, [salesOrder.id, item.productId, item.quantity, item.unitPrice, item.lineAmount]);
+    }
+
+    // 6. Update Enquiry to WON
+    if (quotation.enquiryId) {
+      await client.query(`
+        UPDATE public."enquiry"
+        SET status = 'WON', "updatedAt" = NOW()
+        WHERE id = $1
+      `, [quotation.enquiryId]);
+    }
+
+    await client.query('COMMIT');
+
+    res.status(201).json({
+      success: true,
+      salesOrder
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    if (error.message.includes('converted') || error.message.includes('ACCEPTED')) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+    next(error);
+  } finally {
+    client.release();
+  }
+};
