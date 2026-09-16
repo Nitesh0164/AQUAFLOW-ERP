@@ -5,6 +5,8 @@ import { errorHandler } from './middleware/error.js';
 import healthRoutes from './routes/health.js';
 import authRoutes from './routes/auth.routes.js';
 import customerRoutes from './routes/customer.routes.js';
+import productRoutes from './routes/product.routes.js';
+import inventoryRoutes from './routes/inventory.routes.js';
 
 const app = express();
 
@@ -16,6 +18,8 @@ app.use(express.json());
 app.use('/api', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/inventory', inventoryRoutes);
 
 // 404 Middleware
 app.use(notFoundHandler);
